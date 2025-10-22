@@ -70,8 +70,8 @@ class DGMC(torch.nn.Module):
     def __init__(self, in_channels,psi_1, psi_2, num_steps, vocab_size=100, k=-1, detach=False):
         super(DGMC, self).__init__()
 
-        # 级联特征融合后的维度 2*in_channels 投影回 in_channels
-        self.jump_fusion = nn.Linear(2 * in_channels, in_channels, bias=True)
+        # # 级联特征融合后的维度 2*in_channels 投影回 in_channels
+        # self.jump_fusion = nn.Linear(2 * in_channels, in_channels, bias=True)
 
         self.embed = nn.Embedding(vocab_size, psi_1.in_channels)
 
@@ -188,26 +188,26 @@ class DGMC(torch.nn.Module):
         h_s = self.psi_1(x_s, edge_index_s, edge_attr_s)#s,t:source and target. This is the first gnn's propogation process.
         h_t = self.psi_1(x_t, edge_index_t, edge_attr_t)
 
-        # —— jump fusion ——*加*
-        if jump_index_s is not None and jump_index_s.numel() > 0:
-            # jump_index_s: tensor [2, E_s], 第一行是 src，第二行是 tgt
-            src = jump_index_s[0]  # [E_s]
-            tgt = jump_index_s[1]  # [E_s]
-            feat_src = h_s[src]  # [E_s, D]
-            feat_tgt = h_s[tgt]  # [E_s, D]
-            cat = torch.cat([feat_tgt, feat_src], dim=-1)  # [E_s, 2D]
-            msg = self.jump_fusion(cat)  # [E_s, D]
-            # 把 msg 累加回每个 tgt 节点
-            h_s = h_s.index_add(0, tgt, msg)
-
-        if jump_index_t is not None and jump_index_t.numel() > 0:
-            src = jump_index_t[0];
-            tgt = jump_index_t[1]
-            feat_src = h_t[src];
-            feat_tgt = h_t[tgt]
-            cat = torch.cat([feat_tgt, feat_src], dim=-1)
-            msg = self.jump_fusion(cat)
-            h_t = h_t.index_add(0, tgt, msg)
+        # # —— jump fusion ——*加*   !!!!
+        # if jump_index_s is not None and jump_index_s.numel() > 0:
+        #     # jump_index_s: tensor [2, E_s], 第一行是 src，第二行是 tgt
+        #     src = jump_index_s[0]  # [E_s]
+        #     tgt = jump_index_s[1]  # [E_s]
+        #     feat_src = h_s[src]  # [E_s, D]
+        #     feat_tgt = h_s[tgt]  # [E_s, D]
+        #     cat = torch.cat([feat_tgt, feat_src], dim=-1)  # [E_s, 2D]
+        #     msg = self.jump_fusion(cat)  # [E_s, D]
+        #     # 把 msg 累加回每个 tgt 节点
+        #     h_s = h_s.index_add(0, tgt, msg)
+        #
+        # if jump_index_t is not None and jump_index_t.numel() > 0:
+        #     src = jump_index_t[0];
+        #     tgt = jump_index_t[1]
+        #     feat_src = h_t[src];
+        #     feat_tgt = h_t[tgt]
+        #     cat = torch.cat([feat_tgt, feat_src], dim=-1)
+        #     msg = self.jump_fusion(cat)
+        #     h_t = h_t.index_add(0, tgt, msg)
 
 
         # # —— 1) 在 GNN 计算前，先把跳转对的源→目标特征“拼接+降维”融合到原始特征上 ——
